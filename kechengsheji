@@ -1,0 +1,437 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<math.h>
+#include<conio.h> 
+#define ENM 100
+#define USERNUM 100
+
+int a[20],b[20];//用于记录拓扑递归中n的减少次数保障每次都能使用
+int file=0;//记录文件的个数 
+int t=0,z=1;//保存文件中名称的顺序 
+char event[ENM][100],account[100];
+
+ //便于文件中的存储 ，用于标注文件是哪个用户的 
+struct people{
+ char user[100];//用户名 
+ char code[100];//密码 
+};
+
+struct people pp[USERNUM];
+
+typedef struct node{
+ 	int c;//记录前驱个数 
+ 	char b[100];//用于记录事件名字 
+ 	struct node *next; //用于构建边表的指针 
+}node;
+
+ typedef struct tu{
+ 	int point,side;//记录节点和边数； 
+ 	struct{
+ 	 int n;//记录前驱数 
+  	 char EN[100];//记录节点名称 
+  	 node *f;//指针 
+ 	}z[ENM];
+}tu;
+
+void add();
+void lend(int n); 
+void menu();
+void cg(tu *s);
+void list(tu *s);
+void tp(tu *s,int kk,int flag);
+void read(tu *s);
+void FREAD(tu *s);
+void save();
+tu finish(tu *s);
+void cancel();
+
+int main () {
+
+ add(); 
+ 
+ tu* s;
+ int kk,f;
+ s=(tu *)malloc(sizeof(tu));
+ s->point=0;
+ int choice=1;
+ while(choice!=0){
+  menu();
+  kk=f=0;
+  scanf("%d",&choice);
+  getchar();
+  system("cls"); 
+  switch(choice){
+  case 1:cg(s);continue; 
+  case 2:tp(s,kk,f);continue;
+  case 3:list(s);continue;
+  case 4:read(s);continue;
+ // case 4:FREAD(s);continue;
+  case 5:save(s);continue;
+  case 6:finish(s);continue;//输入已经完成的事件； 
+  case 7:cancel(s);continue;//注销功能 
+ }
+ }
+ printf("感谢您的使用丿(●'v'●)丿\n"); 
+}
+
+void add()                               /*添加文件*/ 
+{	
+	int i=0;
+	FILE *fp;  //1.定义文件指针 
+	fp = fopen("tt.txt", "r"); //2.打开文件 
+	fscanf(fp,"%s %s",pp[i].user,pp[i].code); 
+	while(strcmp(pp[i].user,"0")!=0){ 
+		i++;
+		fscanf(fp,"%s %s",pp[i].user,pp[i].code);
+		}
+	fclose(fp);//关闭文件 
+	lend(i);
+}
+void lend(int n){
+	int i,j;
+	printf("\t按 Enter 键进入登录页面\n");            
+	getchar();
+	printf("\n");
+	char c;
+	char user1[100],code1[100]={0}; 
+	while(1){
+		j=0;
+		printf("用户名：");
+		scanf("%s",&user1);
+		printf("密  码：");
+		while(1){
+			c=getch();
+			if(c=='\r')
+			break;
+			else if (c=='\b'){
+				printf("\b \b");
+				--j;
+			}
+			else {
+				code1[j++]=c;
+				printf("*");
+			}
+		}
+		for(i=0;i<n;i++){
+			if(strcmp(pp[i].user,user1)==0&&strcmp(pp[i].code,code1)==0){
+				printf("\n登录成功！o(*￣▽￣*)ブ\n");
+				strcpy(account,user1);
+				break;
+			}
+		}
+		if(i<n){
+			break;
+		}
+		if(i>=n){
+			printf("\n登录失败！	TAT      \n\n请再试一次！\n");
+			 strcpy(user1,"");
+			continue;	
+		}
+	} 
+	printf("\n\n");
+}
+
+	
+void menu(){
+	system("cls");
+	printf("%8c*________________________________________*\n",' ');
+	printf("%8c|    <欢迎使用新型任务管理系统系统!>     |\n",' ');
+	printf("%8c|________________________________________|\n",' ');
+	printf("%8c|      输入 1 ：事件录入                 |\n",' ');
+	printf("%8c|________________________________________|\n",' ');
+	printf("%8c|      输入 2 ：生成可执行的拓扑序列     |\n",' ');
+	printf("%8c|________________________________________|\n",' ');
+	printf("%8c|      输入 3 ：'邻接链表式'展示事件     |\n",' ');
+	printf("%8c|________________________________________|\n",' ');
+	printf("%8c|      输入 4 ：从文件中读取事件         |\n",' ');
+	printf("%8c|________________________________________|\n",' ');
+	printf("%8c|      输入 5 ：建立行程表文件           |\n",' ');
+	printf("%8c|________________________________________|\n",' ');
+	printf("%8c|      输入 6 ：动态更新行程拓扑         |\n",' ');
+	printf("%8c|________________________________________|\n",' ');
+	printf("%8c|      输入 7 ：注销当前账户             |\n",' ');
+	printf("%8c|________________________________________|\n",' ');
+	printf("%8c|      输入 0 ：结束本系统               |\n",' ');
+	printf("%8c*________________________________________*\n",' ');
+	
+}
+void cg(tu *s){
+ int arc,t,i,j,c;
+ node *p;
+ t=1;
+ arc=0;
+ if(z!=1){
+  z-=1;
+ 
+ do{
+  printf("请输入事件名称(如需结束请输入结束)：") ;
+  gets(s->z[z].EN); 
+  s->z[z].f=NULL;
+  s->z[z].n=0;
+  z++;//将所有节点都储存到顺序表中；  
+ }while(strcmp(s->z[z-1].EN,"结束")!=0);
+ system("cls"); 
+ s->point=z-2;
+ printf("现在进行事件关联性整理（结束请在第一个事件序号栏中输入99）\n"); 
+ printf("请输入有关联性的事件的序号（第一个事件是第二个事件的前提）\n");
+ printf("提示目前已输入的事情及其序号为：\n");
+  for(c=1;c<=s->point;c++)
+  printf("%d.%s\n",c,s->z[c].EN);
+ while(1){
+ printf("\n请输入前驱事件序号:");
+  scanf("%d",&i);
+  if(i==99)break;
+  printf("请输入后继事件序号:");
+  scanf("%d",&j);
+  s->z[j].n++;
+  p=(node *)malloc(sizeof(node));
+ strcpy(p->b,s->z[j].EN);
+ p->next=s->z[i].f;
+ s->z[i].f=p;//通过工作指针将边表插入；
+ arc++; 
+ }
+ s->side=arc;
+ }
+ if(z==1){
+ do{printf("请输入事件名称(如需结束请输入结束)：") ;
+ gets(s->z[z].EN); 
+  s->z[z].f=NULL;
+  s->z[z].n=0;
+  z++;//将所有节点都储存到顺序表中；  
+ }while(strcmp(s->z[z-1].EN,"结束")!=0);
+ system("cls"); 
+ s->point=z-2;
+ printf("现在进行事件关联性整理（结束请在第一个事件序号栏中输入99）\n"); 
+ printf("请输入有关联性的事件的序号（第一个事件是第二个事件的前提）\n");
+ printf("提示目前已输入的事情及其序号为：\n");
+  for(c=1;c<=s->point;c++)
+  printf("%d.%s\n",c,s->z[c].EN);
+ while(1){
+ printf("\n请输入前驱事件序号:");
+  scanf("%d",&i);
+  if(i==99)break;
+  printf("请输入后继事件序号:");
+  scanf("%d",&j);
+  s->z[j].n++;
+  p=(node *)malloc(sizeof(node));
+ strcpy(p->b,s->z[j].EN);
+ p->next=s->z[i].f;
+ s->z[i].f=p;//通过工作指针将边表插入；
+ arc++; 
+ }
+ s->side=arc;
+ }
+ printf("温馨提示：请输入回车继续操作丿(●'v'●)丿\n"); 
+ getchar(); 
+}
+void list(tu *s){
+	int i,c;
+	node *p;
+	for(i=1;i<=s->point;i++){
+		printf("%d.%s:",i,s->z[i].EN);
+		p=s->z[i].f;
+		c=1;
+		while(p){
+			printf("%2d.%s",c,p->b);
+			p=p->next;
+			c++;
+		}
+		printf("\n");
+	}
+	printf("温馨提示：请输入回车继续操作丿(●'v'●)丿\n");
+	getchar(); 
+}
+void tp(tu *g,int kk,int flag){//进行拓扑排序并输出； 
+	int i,j,k,m;
+	int l[100];
+	m=0;
+	kk++;
+	node *p;
+	tu *s;
+	s=g;
+	//找前驱为0的节点； 
+	for(i=1;i<=s->point;i++){
+		if(s->z[i].n==0){
+			s->z[i].n--;
+				a[i]++;		
+				m++;
+				l[m]=i;
+		}
+	}
+	i=1;
+	//将即将输出的节点的后继节点的n更新 
+	while(i<=m){
+		p=s->z[l[i]].f;
+			while(p){
+				for(j=1;j<=s->point;j++)
+					if(strcmp(p->b,s->z[j].EN)==0){
+						s->z[j].n--;
+						b[j]++;
+					}	
+				p=p->next;
+			}
+			i++;
+	} 
+	if(m!=0){
+		if(m!=1){
+			printf("------------ \n");
+			for(k=1;k<=m;k++){
+				printf("%d.%s \n",l[k],s->z[l[k]].EN);
+				if(flag==0){
+					t++;
+					strcpy(event[t],s->z[l[k]].EN);
+				}
+				//文件存储中的事件名称 
+			}
+			printf("------------ \n");
+			printf("    || \n");
+			printf("    || \n");
+			printf("    VV \n");
+		}
+		if(m==1) {
+			printf("------------ \n");
+			printf("%d.%s\n",l[1],s->z[l[1]].EN);
+			printf("------------ \n");
+			printf("    || \n");
+			printf("    || \n");
+			printf("    VV \n");
+			if(flag==0){
+				t++;
+				strcpy(event[t],s->z[l[1]].EN);
+			}
+			//文件存储中的名称； 
+		}
+		tp(s,kk,flag);
+	}
+	if(kk==1){
+		for(i=1;i<=g->point;i++){
+			g->z[i].n=b[i]+a[i]-1;
+			a[i]=b[i]=0;
+		}
+	printf("------------ \n");
+	printf("结束\n");
+	printf("温馨提示：请输入回车继续操作丿(●'v'●)丿\n");
+	getchar();
+	}
+}
+void read(tu *s){
+ FILE *fp;
+ printf("开始");
+ fp=fopen("文件.txt","r");//打开文件进行读取 
+ if(fp==NULL){
+  printf("open error\n");//打开失败报错 
+  exit(0);
+ }
+ int i,j,k;
+ k=z;
+ j=k;
+ if(k==1){
+  while(1){
+   fscanf(fp,"%d.%s",&i,s->z[k].EN);//在文件中与结构一一对应；
+   if(i==0) break;//判断结束条件 
+   k++; 
+ }
+ z=k+1;
+ s->point=k-1;
+ }
+ 
+ else if(k!=1){
+  while(1){
+   fscanf(fp,"%d.%s",&i,s->z[k-1].EN); ;//在文件中与结构一一对应；
+    if(i==0) break;//判断结束条件 
+    k++; 
+ }
+  z=k; 
+  s->point=k-2;
+ }
+ 
+ for(j=j;j<=s->point;j++){
+  s->z[j].n=0;
+ }
+ fclose(fp);//关闭文件 
+ printf("读取到了%d个事件\n",s->point);
+ 
+ printf("温馨提示：请输入回车继续操作丿(●'v'●)丿\n");
+ getchar();  
+}
+void FREAD(tu *s){
+	int i;
+	for(i=1;i<=s->point;i++){
+		printf("%d.%s\n",i,s->z[i].EN);
+	}
+	printf("\n");
+		for(i=1;i<=s->point;i++){
+		printf("%s-->",s->z[i].EN);
+	}
+	printf("结束\n");
+	printf("温馨提示：请输入回车继续操作丿(●'v'●)丿\n");
+	getchar(); 
+}
+void save(tu *s){
+	FILE *fp;
+	int i;
+	char f[1024];
+	file++;
+	sprintf(f,"%s的行程%d.txt",account,file);
+	if(s->point==0){
+	printf("错误！\n该行程为空\n行程%d创建失败\n",file);
+	file--;
+	}
+	else{
+	fp=fopen(f,"w");//打开文件并进行写入 
+	fprintf(fp,"用户：%s\n",account);
+	for(i=1;i<=s->point;i++)
+	fprintf(fp,"%d.%s\n",i,event[i]);
+	fclose(fp);
+	printf("行程单写入成功\n");
+	printf("已保存至%s的行程%d.txt\n",account,file);
+	}
+	printf("温馨提示：请输入回车继续操作丿(●'v'●)丿\n");
+	getchar(); 
+	}
+	
+tu finish(tu *s){
+		int i,k,cc,j,f;
+		cc=0;
+		f=1;
+		tu *g;
+		node *p;
+		g=s; 
+		printf("以下是目前的事件及其序号：\n");
+		for(i=1;i<=s->point;i++){
+			printf("%d.%s\n",i,s->z[i].EN);
+		}
+		while(i!=1){
+		printf("\n请输入将要完成的事件(仅需要输入序号即可,输入'0'可以提前结束)：");
+		scanf("%d",&k);
+		getchar();
+		if(k!=0){
+		if(g->z[k].n==0){
+			g->z[k].n--;
+			p=g->z[k].f;
+			while(p){
+					for(j=1;j<=s->point;j++)
+				if(strcmp(p->b,s->z[j].EN)==0){
+					s->z[j].n--;
+					}
+					p=p->next;
+					}
+			printf("\n恭喜你完成这件事情，下面是你接下来该做的事情，已经为你整理好了\n");
+			printf("顺序为：\n");
+			tp(g,cc,f);
+			i--;
+		}
+			else for(j=1;j<=s->point;j++){
+				if(s->z[j].n==0)
+				printf("请先完成%s，不然行程将无法继续哦！\n",s->z[j].EN);
+			}
+		}
+		else break;
+		} 
+		 
+} 
+void cancel(tu *s){
+	add();
+	z=1;
+}
